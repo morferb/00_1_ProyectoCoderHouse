@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-from typing import Annotated, AsyncGenerator, List, Optional
+from typing import Annotated, AsyncGenerator, List, Optional, Union
 import os
 
 from fastapi import Depends, FastAPI, HTTPException, status
@@ -112,28 +112,38 @@ def read_root():
 # ENDPOINTS: MANUFACTURERS
 # ==========================================
 
-@app.post("/manufacturers/", response_model=Manufacturer, tags=["Manufacturers"])
-def create_manufacturer(manufacturer: Manufacturer, session: Annotated[Session, Depends(get_session)]) -> Manufacturer:
-    """Registra un nuevo fabricante en el sistema.
+@app.post("/manufacturers/", response_model=Union[Manufacturer, List[Manufacturer]], tags=["Manufacturers"])
+def create_manufacturer(
+    manufacturer_data: Union[Manufacturer, List[Manufacturer]], 
+    session: Annotated[Session, Depends(get_session)]
+) -> Union[Manufacturer, List[Manufacturer]]:
+    """Registra uno o varios fabricantes en el sistema.
 
     Args:
-        manufacturer (Manufacturer): Datos del fabricante.
+        manufacturer_data (Union[Manufacturer, List[Manufacturer]]): Datos de uno o varios fabricantes.
         session (Session): Sesión de base de datos inyectada.
 
     Raises:
         HTTPException: Si ocurre un error de integridad (ej. nombre duplicado).
 
     Returns:
-        Manufacturer: El objeto del fabricante creado.
+        Union[Manufacturer, List[Manufacturer]]: El o los objetos creados.
     """
     try:
-        session.add(manufacturer)
-        session.commit()
-        session.refresh(manufacturer)
-        return manufacturer
+        if isinstance(manufacturer_data, list):
+            session.add_all(manufacturer_data)
+            session.commit()
+            for item in manufacturer_data:
+                session.refresh(item)
+            return manufacturer_data
+        else:
+            session.add(manufacturer_data)
+            session.commit()
+            session.refresh(manufacturer_data)
+            return manufacturer_data
     except IntegrityError:
         session.rollback()
-        raise HTTPException(status_code=400, detail="El fabricante ya existe o hay un error de integridad.")
+        raise HTTPException(status_code=400, detail="Uno o más fabricantes ya existen o hay un error de integridad.")
 
 @app.get("/manufacturers/", response_model=List[Manufacturer], tags=["Manufacturers"])
 def read_manufacturers(session: Annotated[Session, Depends(get_session)]) -> List[Manufacturer]:
@@ -226,28 +236,38 @@ def delete_manufacturer(manufacturer_id: int, session: Annotated[Session, Depend
 # ENDPOINTS: DEVICE TYPES
 # ==========================================
 
-@app.post("/device-types/", response_model=DeviceType, tags=["Device Types"])
-def create_device_type(device_type: DeviceType, session: Annotated[Session, Depends(get_session)]) -> DeviceType:
-    """Registra un nuevo tipo de dispositivo.
+@app.post("/device-types/", response_model=Union[DeviceType, List[DeviceType]], tags=["Device Types"])
+def create_device_type(
+    device_type_data: Union[DeviceType, List[DeviceType]], 
+    session: Annotated[Session, Depends(get_session)]
+) -> Union[DeviceType, List[DeviceType]]:
+    """Registra uno o varios tipos de dispositivo.
 
     Args:
-        device_type (DeviceType): Datos del tipo de dispositivo.
+        device_type_data (Union[DeviceType, List[DeviceType]]): Datos de uno o varios tipos de dispositivo.
         session (Session): Sesión de base de datos inyectada.
 
     Raises:
         HTTPException: Si el tipo ya existe.
 
     Returns:
-        DeviceType: El tipo de dispositivo creado.
+        Union[DeviceType, List[DeviceType]]: El o los tipos de dispositivo creados.
     """
     try:
-        session.add(device_type)
-        session.commit()
-        session.refresh(device_type)
-        return device_type
+        if isinstance(device_type_data, list):
+            session.add_all(device_type_data)
+            session.commit()
+            for item in device_type_data:
+                session.refresh(item)
+            return device_type_data
+        else:
+            session.add(device_type_data)
+            session.commit()
+            session.refresh(device_type_data)
+            return device_type_data
     except IntegrityError:
         session.rollback()
-        raise HTTPException(status_code=400, detail="El tipo de dispositivo ya existe.")
+        raise HTTPException(status_code=400, detail="Uno o más tipos de dispositivo ya existen.")
 
 @app.get("/device-types/", response_model=List[DeviceType], tags=["Device Types"])
 def read_device_types(session: Annotated[Session, Depends(get_session)]) -> List[DeviceType]:
@@ -291,21 +311,38 @@ def delete_device_type(type_id: int, session: Annotated[Session, Depends(get_ses
 # ENDPOINTS: LOCATIONS
 # ==========================================
 
-@app.post("/locations/", response_model=Location, tags=["Locations"])
-def create_location(location: Location, session: Annotated[Session, Depends(get_session)]) -> Location:
-    """Crea una nueva ubicación.
+@app.post("/locations/", response_model=Union[Location, List[Location]], tags=["Locations"])
+def create_location(
+    location_data: Union[Location, List[Location]], 
+    session: Annotated[Session, Depends(get_session)]
+) -> Union[Location, List[Location]]:
+    """Crea una o varias ubicaciones.
 
     Args:
-        location (Location): Datos de la ubicación.
+        location_data (Union[Location, List[Location]]): Datos de una o varias ubicaciones.
         session (Session): Sesión de base de datos inyectada.
+        
+    Raises:
+        HTTPException: Si ocurre un error al procesar las entidades en base de datos.
 
     Returns:
-        Location: La ubicación creada.
+        Union[Location, List[Location]]: La o las ubicaciones creadas.
     """
-    session.add(location)
-    session.commit()
-    session.refresh(location)
-    return location
+    try:
+        if isinstance(location_data, list):
+            session.add_all(location_data)
+            session.commit()
+            for item in location_data:
+                session.refresh(item)
+            return location_data
+        else:
+            session.add(location_data)
+            session.commit()
+            session.refresh(location_data)
+            return location_data
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=400, detail=f"Error al procesar las ubicaciones: {str(e)}")
 
 @app.get("/locations/", response_model=List[Location], tags=["Locations"])
 def read_locations(session: Annotated[Session, Depends(get_session)]) -> List[Location]:
@@ -349,30 +386,40 @@ def delete_location(location_id: int, session: Annotated[Session, Depends(get_se
 # ENDPOINTS: DEVICES
 # ==========================================
 
-@app.post("/devices/", response_model=Device, tags=["Devices"])
-def create_device(device: Device, session: Annotated[Session, Depends(get_session)]) -> Device:
-    """Registra un nuevo dispositivo en el inventario.
+@app.post("/devices/", response_model=Union[Device, List[Device]], tags=["Devices"])
+def create_device(
+    device_data: Union[Device, List[Device]], 
+    session: Annotated[Session, Depends(get_session)]
+) -> Union[Device, List[Device]]:
+    """Registra uno o varios dispositivos en el inventario.
 
     Args:
-        device (Device): Información del activo de TI.
+        device_data (Union[Device, List[Device]]): Información de uno o varios activos de TI.
         session (Session): Sesión de base de datos inyectada.
 
     Raises:
         HTTPException: Si el serial está duplicado o fallan las llaves foráneas.
 
     Returns:
-        Device: El dispositivo creado.
+        Union[Device, List[Device]]: El o los dispositivos creados.
     """
     try:
-        session.add(device)
-        session.commit()
-        session.refresh(device)
-        return device
+        if isinstance(device_data, list):
+            session.add_all(device_data)
+            session.commit()
+            for item in device_data:
+                session.refresh(item)
+            return device_data
+        else:
+            session.add(device_data)
+            session.commit()
+            session.refresh(device_data)
+            return device_data
     except IntegrityError:
         session.rollback()
         raise HTTPException(
             status_code=400, 
-            detail="Error de Integridad: Verifica que el serial_number no esté duplicado y que los IDs de manufacturer, device_type y location existan."
+            detail="Error de Integridad: Verifica que los seriales no estén duplicados y que los IDs foráneos existan."
         )
 
 @app.get("/devices/", response_model=List[Device], tags=["Devices"])
