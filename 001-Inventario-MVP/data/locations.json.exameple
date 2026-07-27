@@ -1,0 +1,52 @@
+[
+  {
+    "site_code": "AR",
+    "id": 1,
+    "name": "Argentina"
+  },
+  {
+    "site_code": "BR",
+    "id": 2,
+    "name": "Brazil"
+  },
+  {
+    "site_code": "CL",
+    "id": 3,
+    "name": "Chile"
+  },
+  {
+    "site_code": "CO",
+    "id": 4,
+    "name": "Colombia"
+  },
+  {
+    "site_code": "MX",
+    "id": 5,
+    "name": "Mexico"
+  },
+  {
+    "site_code": "PE",
+    "id": 6,
+    "name": "Peru"
+  },
+  {
+    "site_code": "UY",
+    "id": 7,
+    "name": "Uruguay"
+  },
+  {
+    "site_code": "US",
+    "id": 8,
+    "name": "United States"
+  },
+  {
+    "site_code": "ES",
+    "id": 9,
+    "name": "Spain"
+  },
+  {
+    "site_code": "GB",
+    "id": 10,
+    "name": "United Kingdom"
+  }
+]

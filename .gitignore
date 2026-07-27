@@ -1,0 +1,23 @@
+# Entornos virtuales de Python
+.venv/
+env/
+venv/
+ENV/
+
+# Archivos compilados de Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.py,cover
+
+# Archivos de configuración de editores y sistemas operativos
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Volúmenes locales o datos persistentes de Docker
+postgres_data/
+
+#Variables de entorno
+.env

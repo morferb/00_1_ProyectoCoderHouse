@@ -1,0 +1,121 @@
+
+{
+"id": 2,
+"name": "Fortinet"
+},
+{
+"id": 3,
+"name": "Dell"
+},
+{
+"id": 1,
+"name": "Cisco"
+},
+{
+"id": 4,
+"name": "HP"
+},
+{
+"id": 5,
+"name": "Lenovo"
+},
+{
+"id": 6,
+"name": "Juniper"
+},
+{
+"id": 7,
+"name": "Palo Alto"
+},
+{
+"id": 8,
+"name": "VMware"
+},
+{
+"id": 9,
+"name": "Microsoft"
+},
+{
+"id": 10,
+"name": "AWS"
+},
+{
+"id": 11,
+"name": "Google Cloud"
+},
+{
+"id": 12,
+"name": "Oracle"
+},
+{
+"id": 13,
+"name": "IBM"
+},
+{
+"id": 14,
+"name": "Aruba"
+},
+{
+"id": 15,
+"name": "Ubiquiti"
+},
+{
+"id": 16,
+"name": "MikroTik"
+},
+{
+"id": 17,
+"name": "F5 Networks"
+},
+{
+"id": 18,
+"name": "Check Point"
+},
+{
+"id": 19,
+"name": "Red Hat"
+},
+{
+"id": 20,
+"name": "SUSE"
+},
+{
+"id": 21,
+"name": "Canonical"
+},
+{
+"id": 22,
+"name": "Docker"
+},
+{
+"id": 23,
+"name": "Kubernetes"
+},
+{
+"id": 24,
+"name": "Zabbix"
+},
+{
+"id": 25,
+"name": "Grafana"
+},
+{
+"id": 26,
+"name": "Prometheus"
+},
+{
+"id": 27,
+"name": "NetBox"
+},
+{
+"id": 28,
+"name": "Atlassian"
+},
+{
+"id": 29,
+"name": "GitHub"
+},
+{
+"id": 30,
+"name": "GitLab"
+}

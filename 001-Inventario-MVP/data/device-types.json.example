@@ -1,0 +1,42 @@
+[
+  {
+    "id": 1,
+    "name": "Router"
+  },
+  {
+    "id": 2,
+    "name": "Switch"
+  },
+  {
+    "id": 3,
+    "name": "Firewall"
+  },
+  {
+    "id": 4,
+    "name": "Access Point"
+  },
+  {
+    "id": 5,
+    "name": "Server"
+  },
+  {
+    "id": 6,
+    "name": "Storage"
+  },
+  {
+    "id": 7,
+    "name": "Load Balancer"
+  },
+  {
+    "id": 8,
+    "name": "Gateway"
+  },
+  {
+    "id": 9,
+    "name": "Modem"
+  },
+  {
+    "id": 10,
+    "name": "Hub"
+  }
+]
