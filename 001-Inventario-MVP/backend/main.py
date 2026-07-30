@@ -2,10 +2,10 @@ from contextlib import asynccontextmanager
 from typing import Annotated, AsyncGenerator, List, Optional, Union
 import os
 
-from fastapi import Depends, FastAPI, HTTPException, status
-from sqlmodel import Field, Session, SQLModel, create_engine, select
-from sqlalchemy.exc import IntegrityError
-from prometheus_fastapi_instrumentator import Instrumentator
+from fastapi import Depends, FastAPI, HTTPException, status # pyright: ignore[reportMissingImports]
+from sqlmodel import Field, Session, SQLModel, create_engine, select # pyright: ignore[reportMissingImports]
+from sqlalchemy.exc import IntegrityError # pyright: ignore[reportMissingImports]
+from prometheus_fastapi_instrumentator import Instrumentator # pyright: ignore[reportMissingImports]
 
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:password@db:5432/inventario_ti")
 engine = create_engine(DATABASE_URL)
