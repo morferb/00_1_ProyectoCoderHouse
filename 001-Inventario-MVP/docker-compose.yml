@@ -13,6 +13,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data_vol:/var/lib/postgresql/data
+    restart: unless-stopped
     networks:
       - LAB_TYMA
     healthcheck:
@@ -29,6 +30,7 @@ services:
     container_name: inventario_api_prod
     hostname: api_host
     command: uvicorn main:app --host 0.0.0.0 --port 8000
+    restart: unless-stopped
     volumes:
       - ./backend:/app
     ports:
@@ -48,6 +50,7 @@ services:
     image: inventario_ti_frontend:latest
     container_name: inventario_frontend_prod
     hostname: frontend_host
+    restart: unless-stopped
     ports:
       - "8501:8501"
     environment:
