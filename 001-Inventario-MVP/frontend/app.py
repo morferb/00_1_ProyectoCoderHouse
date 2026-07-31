@@ -14,67 +14,112 @@ def get_api_url() -> str:
 
 API_URL = get_api_url()
 
-# El resto de tus funciones fetch_devices() y main() irían a partir de aquí...
+def fetch_data(endpoint: str) -> List[Dict[str, Any]]:
+    """Consulta un endpoint específico de la API para obtener un listado de registros.
 
-def fetch_devices() -> List[Dict[str, Any]]:
-    """Obtiene la lista de dispositivos desde la API de Inventario TI.
-
-    Realiza una petición GET al endpoint /devices/ y formatea la respuesta
-    para ser consumida por la interfaz web.
+    Args:
+        endpoint (str): El nombre del recurso a consultar (ej. 'devices', 'locations').
 
     Returns:
-        List[Dict[str, Any]]: Una lista de diccionarios, donde cada diccionario 
-        representa los datos operativos de un dispositivo (hostname, IP, serial, etc.).
+        List[Dict[str, Any]]: Una lista de diccionarios con los datos devueltos por la API.
 
     Raises:
-        requests.exceptions.RequestException: Si ocurre un error de conexión, 
-        timeout o la API devuelve un código de error HTTP.
+        requests.exceptions.RequestException: Si ocurre un error de red, timeout o
+            la API devuelve un código de error HTTP (ej. 404, 500).
     """
-    response = requests.get(f"{API_URL}/devices/")
+    response = requests.get(f"{API_URL}/{endpoint}/")
     response.raise_for_status()
     return response.json()
 
-def main() -> None:
-    """Ejecuta y renderiza la interfaz web del MVP utilizando Streamlit.
+def get_mapped_dataframe(devices: List[Dict[str, Any]], locations: List[Dict[str, Any]], manufacturers: List[Dict[str, Any]]) -> pd.DataFrame:
+    """Procesa los datos en crudo para cruzar IDs y renombrar las columnas para la interfaz web.
 
-    Configura el diseño de la página, construye un panel lateral de navegación
-    inspirado en el estilo de NetBox y despliega una tabla de datos interactiva 
-    con los dispositivos registrados en el sistema.
+    Args:
+        devices (List[Dict[str, Any]]): Lista de dispositivos obtenidos de la API.
+        locations (List[Dict[str, Any]]): Lista de ubicaciones obtenidas de la API.
+        manufacturers (List[Dict[str, Any]]): Lista de fabricantes obtenidos de la API.
 
     Returns:
-        None: La función no retorna datos, se encarga de pintar la UI.
+        pd.DataFrame: Un DataFrame de Pandas con los cruces resueltos y columnas amigables
+        listo para ser renderizado en Streamlit.
     """
-    st.set_page_config(page_title="Inventario TI", layout="wide")
 
-    # Panel lateral de navegación
+# 1. Crear diccionarios de mapeo para búsquedas rápidas (O(1))
+    loc_map = {loc["id"]: loc["name"] for loc in locations}
+    mfg_map = {mfg["id"]: mfg["name"] for mfg in manufacturers}
+
+    # 2. Enriquecer los datos de los dispositivos con los nombres legibles
+    for device in devices:
+        # Se usa .get() doble para evitar errores si la llave no existe o si el valor es None
+        device["location_name"] = loc_map.get(device.get("location_id"), "Sin Asignar")
+        device["manufacturer_name"] = mfg_map.get(device.get("manufacturer_id"), "Sin Asignar")
+
+    df = pd.DataFrame(devices)
+
+    # 3. DICCIONARIO DE CONFIGURACIÓN DE COLUMNAS
+    # Puedes editar los valores (derecha) sin romper la lógica del sistema (izquierda)
+    COLUMN_MAPPING = {
+        "hostname": "Nombre del Host",
+        "ip_address": "Dirección IP",
+        "status": "Estado Operativo",
+        "manufacturer_name": "Fabricante",
+        "model": "Modelo de Equipo",
+        "serial_number": "Número de Serie",
+        "location_name": "Sitio / Ubicación"
+    }
+
+    if not df.empty:
+        # Filtrar solo las columnas que nos interesan mostrar y ordenarlas según el diccionario
+        existing_columns = [col for col in COLUMN_MAPPING.keys() if col in df.columns]
+        df = df[existing_columns]
+        
+        # Aplicar el renombramiento de columnas para la visualización
+        df = df.rename(columns=COLUMN_MAPPING)
+
+    return df
+
+def main() -> None:
+    """Función principal que renderiza la interfaz web del MVP en Streamlit.
+
+    Construye la barra lateral de navegación y la tabla principal interactiva.
+    Se encarga de orquestar la obtención de datos y el manejo de errores visuales.
+
+    Returns:
+        None: La función se dedica a pintar componentes en la pantalla.
+    """
+    st.set_page_config(page_title="Inventario TI", page_icon="🖥️", layout="wide")
+
+    # --- Barra Lateral ---
     st.sidebar.title("Navegación")
     st.sidebar.button("🏢 Ubicaciones")
+    st.sidebar.button("🔌 Dispositivos", type="primary")
     st.sidebar.button("🏷️ Fabricantes")
     st.sidebar.button("💻 Tipos de Dispositivos")
-    st.sidebar.button("🔌 Dispositivos", type="primary")
 
+    # --- Área Principal ---
     st.title("Gestión de Dispositivos")
-    st.markdown("Vista general del inventario operativo consultando el backend de FastAPI.")
+    st.markdown("Visualización cruzada del inventario operativo actual.")
 
     try:
-        devices = fetch_devices()
-        if devices:
-            # Pandas permite que Streamlit renderice una tabla rica en funcionalidades (ordenar, buscar)
-            df = pd.DataFrame(devices)
+        # Ejecutar peticiones a los distintos endpoints
+        with st.spinner("Cargando datos desde la API..."):
+            devices_data = fetch_data("devices") 
+            locations_data = fetch_data("locations") 
+            manufacturers_data = fetch_data("manufacturers") 
+
+        if devices_data:
+            # Procesar el dataframe cruzado
+            df = get_mapped_dataframe(devices_data, locations_data, manufacturers_data)
             
-            # Reordenamos columnas para dar prioridad visual al hostname e IP
-            column_order = ["id", "hostname", "ip_address", "status", "serial_number", "model", "manufacturer_id", "location_id"]
-            
-            # Filtramos para mostrar solo las columnas que existan en el DataFrame
-            existing_columns = [col for col in column_order if col in df.columns]
-            df = df[existing_columns]
-            
+            # Renderizar tabla interactiva
             st.dataframe(df, use_container_width=True, hide_index=True)
         else:
             st.info("No hay dispositivos registrados actualmente en la base de datos.")
-            
+
     except requests.exceptions.RequestException as e:
-        st.error(f"Error de comunicación con la API: {e}")
+        st.error(f"Error de comunicación con la base de datos: Verifica que el backend esté ejecutándose.")
+        st.code(str(e))
+
 
 if __name__ == "__main__":
     main()
