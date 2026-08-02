@@ -96,6 +96,8 @@ def fetch_data(endpoint: str) -> list[dict[str, Any]]:
         duration = time.time() - start_time
         API_REQUEST_LATENCY.labels(endpoint=endpoint).observe(duration)
 
+        return response.json()
+
     except requests.exceptions.RequestException:
         API_ERRORS_TOTAL.labels(endpoint=endpoint).inc()
         raise
