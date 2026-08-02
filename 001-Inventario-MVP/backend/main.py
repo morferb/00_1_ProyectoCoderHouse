@@ -112,22 +112,27 @@ def read_root():
 # ENDPOINTS: MANUFACTURERS
 # ==========================================
 
-@app.post("/manufacturers/", response_model=Union[Manufacturer, List[Manufacturer]], tags=["Manufacturers"])
+@app.post(
+    "/manufacturers/",
+    response_model=Manufacturer | list[Manufacturer],
+    tags=["Manufacturers"],
+)
 def create_manufacturer(
-    manufacturer_data: Union[Manufacturer, List[Manufacturer]], 
-    session: Annotated[Session, Depends(get_session)]
-) -> Union[Manufacturer, List[Manufacturer]]:
+    manufacturer_data: Manufacturer | list[Manufacturer],
+    session: Annotated[Session, Depends(get_session)],
+) -> Manufacturer | list[Manufacturer]:
     """Registra uno o varios fabricantes en el sistema.
 
     Args:
-        manufacturer_data (Union[Manufacturer, List[Manufacturer]]): Datos de uno o varios fabricantes.
+        manufacturer_data (Manufacturer | list[Manufacturer]): Datos de uno o varios
+            fabricantes.
         session (Session): Sesión de base de datos inyectada.
 
     Raises:
         HTTPException: Si ocurre un error de integridad (ej. nombre duplicado).
 
     Returns:
-        Union[Manufacturer, List[Manufacturer]]: El o los objetos creados.
+        Manufacturer | list[Manufacturer]: El o los objetos creados.
     """
     try:
         if isinstance(manufacturer_data, list):
@@ -143,7 +148,10 @@ def create_manufacturer(
             return manufacturer_data
     except IntegrityError:
         session.rollback()
-        raise HTTPException(status_code=400, detail="Uno o más fabricantes ya existen o hay un error de integridad.")
+        raise HTTPException(
+            status_code=400,
+            detail="Uno o más fabricantes ya existen o hay un error de integridad.",
+        )
 
 @app.get("/manufacturers/", response_model=List[Manufacturer], tags=["Manufacturers"])
 def read_manufacturers(session: Annotated[Session, Depends(get_session)]) -> List[Manufacturer]:
@@ -236,22 +244,22 @@ def delete_manufacturer(manufacturer_id: int, session: Annotated[Session, Depend
 # ENDPOINTS: DEVICE TYPES
 # ==========================================
 
-@app.post("/device-types/", response_model=Union[DeviceType, List[DeviceType]], tags=["Device Types"])
+@app.post("/device-types/", response_model=DeviceType | list[DeviceType], tags=["Device Types"])
 def create_device_type(
-    device_type_data: Union[DeviceType, List[DeviceType]], 
+    device_type_data: DeviceType | list[DeviceType], 
     session: Annotated[Session, Depends(get_session)]
-) -> Union[DeviceType, List[DeviceType]]:
+) -> DeviceType | list[DeviceType]:
     """Registra uno o varios tipos de dispositivo.
 
     Args:
-        device_type_data (Union[DeviceType, List[DeviceType]]): Datos de uno o varios tipos de dispositivo.
+        device_type_data (DeviceType | list[DeviceType]): Datos de uno o varios tipos de dispositivo.
         session (Session): Sesión de base de datos inyectada.
 
     Raises:
         HTTPException: Si el tipo ya existe.
 
     Returns:
-        Union[DeviceType, List[DeviceType]]: El o los tipos de dispositivo creados.
+        DeviceType | list[DeviceType]: El o los tipos de dispositivo creados.
     """
     try:
         if isinstance(device_type_data, list):
@@ -311,22 +319,22 @@ def delete_device_type(type_id: int, session: Annotated[Session, Depends(get_ses
 # ENDPOINTS: LOCATIONS
 # ==========================================
 
-@app.post("/locations/", response_model=Union[Location, List[Location]], tags=["Locations"])
+@app.post("/locations/", response_model=Location | list[Location], tags=["Locations"])
 def create_location(
-    location_data: Union[Location, List[Location]], 
+    location_data: Location | list[Location], 
     session: Annotated[Session, Depends(get_session)]
-) -> Union[Location, List[Location]]:
+) -> Location | list[Location]:
     """Crea una o varias ubicaciones.
 
     Args:
-        location_data (Union[Location, List[Location]]): Datos de una o varias ubicaciones.
+        location_data (Location | list[Location]): Datos de una o varias ubicaciones.
         session (Session): Sesión de base de datos inyectada.
-        
+
     Raises:
-        HTTPException: Si ocurre un error al procesar las entidades en base de datos.
+        HTTPException: Si ocurre un error de integridad al procesar las ubicaciones.
 
     Returns:
-        Union[Location, List[Location]]: La o las ubicaciones creadas.
+        Location | list[Location]: La o las ubicaciones creadas.
     """
     try:
         if isinstance(location_data, list):
@@ -340,9 +348,12 @@ def create_location(
             session.commit()
             session.refresh(location_data)
             return location_data
-    except Exception as e:
+    except IntegrityError:
         session.rollback()
-        raise HTTPException(status_code=400, detail=f"Error al procesar las ubicaciones: {str(e)}")
+        raise HTTPException(
+            status_code=400, 
+            detail="Error de integridad al procesar las ubicaciones en la base de datos."
+        )
 
 @app.get("/locations/", response_model=List[Location], tags=["Locations"])
 def read_locations(session: Annotated[Session, Depends(get_session)]) -> List[Location]:
@@ -386,22 +397,22 @@ def delete_location(location_id: int, session: Annotated[Session, Depends(get_se
 # ENDPOINTS: DEVICES
 # ==========================================
 
-@app.post("/devices/", response_model=Union[Device, List[Device]], tags=["Devices"])
+@app.post("/devices/", response_model=Device | list[Device], tags=["Devices"])
 def create_device(
-    device_data: Union[Device, List[Device]], 
+    device_data: Device | list[Device], 
     session: Annotated[Session, Depends(get_session)]
-) -> Union[Device, List[Device]]:
+) -> Device | list[Device]:
     """Registra uno o varios dispositivos en el inventario.
 
     Args:
-        device_data (Union[Device, List[Device]]): Información de uno o varios activos de TI.
+        device_data (Device | list[Device]): Información de uno o varios activos de TI.
         session (Session): Sesión de base de datos inyectada.
 
     Raises:
         HTTPException: Si el serial está duplicado o fallan las llaves foráneas.
 
     Returns:
-        Union[Device, List[Device]]: El o los dispositivos creados.
+        Device | list[Device]: El o los dispositivos creados.
     """
     try:
         if isinstance(device_data, list):
