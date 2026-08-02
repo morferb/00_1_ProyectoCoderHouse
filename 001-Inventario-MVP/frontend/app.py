@@ -24,8 +24,7 @@ def init_prometheus(port: int = 9101, addr: str = "0.0.0.0") -> tuple:
     """Inicializa el servidor HTTP y define las métricas de Prometheus.
 
     Utiliza el decorador @st.cache_resource para garantizar que el servidor y
-    la declaración de métricas se ejecuten una sola vez en la memoria del sistema,
-    evitando colisiones de registro en las re-ejecuciones de Streamlit.
+    la declaración de métricas se ejecuten una sola vez en la memoria del sistema.
 
     Args:
         port (int, optional): Puerto TCP para exponer las métricas. Por defecto 9101.
@@ -62,12 +61,14 @@ PAGE_VIEWS_TOTAL.inc()
 
 # ---------------------------------
 
-
 def get_api_url() -> str:
     """Obtiene la URL de la API desde las variables de entorno del contenedor.
 
+    Args:
+        Ninguno.
+
     Returns:
-        str: La URL base de la API de backend (por defecto "http://localhost:8000" si no se encuentra).
+        str: La URL base de la API de backend (por defecto "http://localhost:8000").
     """
     return os.getenv("API_URL", "http://localhost:8000")
 
@@ -81,12 +82,11 @@ def fetch_data(endpoint: str) -> list[dict[str, Any]]:
     Args:
         endpoint (str): El nombre del recurso a consultar (ej. 'devices', 'locations').
 
-    Returns:
-        List[Dict[str, Any]]: Una lista de diccionarios con los datos devueltos por la API.
-
     Raises:
-        requests.exceptions.RequestException: Si ocurre un error de red, timeout o
-            la API devuelve un código de error HTTP (ej. 404, 500).
+        requests.exceptions.RequestException: Si ocurre un error de red o HTTP.
+
+    Returns:
+        list[dict[str, Any]]: Una lista de diccionarios con los datos devueltos por la API.
     """
     start_time = time.time()
     try:
@@ -95,7 +95,7 @@ def fetch_data(endpoint: str) -> list[dict[str, Any]]:
 
         duration = time.time() - start_time
         API_REQUEST_LATENCY.labels(endpoint=endpoint).observe(duration)
-
+        
         return response.json()
 
     except requests.exceptions.RequestException:
@@ -111,13 +111,12 @@ def get_mapped_dataframe(
     """Procesa los datos en crudo para cruzar IDs y renombrar las columnas para la interfaz web.
 
     Args:
-        devices (List[Dict[str, Any]]): Lista de dispositivos obtenidos de la API.
-        locations (List[Dict[str, Any]]): Lista de ubicaciones obtenidas de la API.
-        manufacturers (List[Dict[str, Any]]): Lista de fabricantes obtenidos de la API.
+        devices (list[dict[str, Any]]): Lista de dispositivos obtenidos de la API.
+        locations (list[dict[str, Any]]): Lista de ubicaciones obtenidas de la API.
+        manufacturers (list[dict[str, Any]]): Lista de fabricantes obtenidos de la API.
 
     Returns:
-        pd.DataFrame: Un DataFrame de Pandas con los cruces resueltos y columnas amigables
-        listo para ser renderizado en Streamlit.
+        pd.DataFrame: Un DataFrame de Pandas con los cruces resueltos y columnas amigables.
     """
 
     # 1. Crear diccionarios de mapeo para búsquedas rápidas (O(1))
@@ -157,24 +156,18 @@ def get_mapped_dataframe(
     return df
 
 
-def main() -> None:
-    """Función principal que renderiza la interfaz web del MVP en Streamlit.
+def render_devices() -> None:
+    """Renderiza la vista principal de Gestión de Dispositivos.
 
-    Construye la barra lateral de navegación y la tabla principal interactiva.
-    Se encarga de orquestar la obtención de datos y el manejo de errores visuales.
+    Obtiene dispositivos, ubicaciones y fabricantes, cruza los datos con
+    la función get_mapped_dataframe y los muestra en una tabla interactiva.
+
+    Args:
+        Ninguno.
 
     Returns:
-        None: La función se dedica a pintar componentes en la pantalla.
+        None: Renderiza componentes visuales en Streamlit.
     """
-
-    # --- Barra Lateral ---
-    st.sidebar.title("Navegación")
-    st.sidebar.button("🏢 Ubicaciones")
-    st.sidebar.button("🔌 Dispositivos", type="primary")
-    st.sidebar.button("🏷️ Fabricantes")
-    st.sidebar.button("💻 Tipos de Dispositivos")
-
-    # --- Área Principal ---
     st.title("Gestión de Dispositivos")
     st.markdown("Visualización cruzada del inventario operativo actual.")
 
@@ -195,10 +188,88 @@ def main() -> None:
             st.info("No hay dispositivos registrados actualmente en la base de datos.")
 
     except requests.exceptions.RequestException as e:
-        st.error(
-            "Error de comunicación con la base de datos: Verifica que el backend esté ejecutándose."
-        )
+        st.error("Error de comunicación con la base de datos: Verifica que el backend esté ejecutándose.")
         st.code(str(e))
+
+
+def render_locations() -> None:
+    """Renderiza la vista de Gestión de Ubicaciones.
+
+    Obtiene el listado de sitios desde el endpoint de ubicaciones y los expone.
+
+    Args:
+        Ninguno.
+
+    Returns:
+        None: Renderiza componentes visuales en Streamlit.
+    """
+    st.title("Gestión de Ubicaciones")
+    st.markdown("Directorio de sitios y sucursales operativas.")
+
+    try:
+        with st.spinner("Cargando ubicaciones..."):
+            locations_data = fetch_data("locations")
+
+        if locations_data:
+            df = pd.DataFrame(locations_data)
+            
+            # Mapeo específico para las columnas de las ubicaciones
+            COLUMN_MAPPING = {
+                "id": "ID",
+                "name": "Nombre de la Ubicación",
+                "site_code": "Codigo de Sitio",
+            }
+            
+            existing_columns = [col for col in COLUMN_MAPPING if col in df.columns]
+            if existing_columns:
+                df = df[existing_columns].rename(columns=COLUMN_MAPPING)
+                
+            st.dataframe(df, use_container_width=True, hide_index=True)
+        else:
+            st.info("No hay ubicaciones registradas actualmente en la base de datos.")
+
+    except requests.exceptions.RequestException as e:
+        st.error("Error al cargar el directorio de ubicaciones.")
+        st.code(str(e))
+
+
+def main() -> None:
+    """Función principal que renderiza la interfaz web del MVP en Streamlit.
+
+    Construye la barra lateral de navegación con estado de sesión para el 
+    enrutamiento de las diferentes pantallas.
+
+    Args:
+        Ninguno.
+
+    Returns:
+        None: La función se dedica a pintar componentes en la pantalla.
+    """
+    if "current_view" not in st.session_state:
+        st.session_state.current_view = "Dispositivos"
+
+    st.sidebar.title("Navegación")
+    
+    if st.sidebar.button("🏢 Ubicaciones", use_container_width=True):
+        st.session_state.current_view = "Ubicaciones"
+    if st.sidebar.button("🔌 Dispositivos", use_container_width=True):
+        st.session_state.current_view = "Dispositivos"
+    if st.sidebar.button("🏷️ Fabricantes", use_container_width=True):
+        st.session_state.current_view = "Fabricantes"
+    if st.sidebar.button("💻 Tipos de Dispositivos", use_container_width=True):
+        st.session_state.current_view = "Tipos de Dispositivos"
+
+    # Enrutamiento principal
+    if st.session_state.current_view == "Dispositivos":
+        render_devices()
+    elif st.session_state.current_view == "Ubicaciones":
+        render_locations()
+    elif st.session_state.current_view == "Fabricantes":
+        st.title("Gestión de Fabricantes")
+        st.info("Vista en construcción...")
+    elif st.session_state.current_view == "Tipos de Dispositivos":
+        st.title("Tipos de Dispositivos")
+        st.info("Vista en construcción...")
 
 
 if __name__ == "__main__":
