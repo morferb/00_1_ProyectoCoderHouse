@@ -61,6 +61,7 @@ PAGE_VIEWS_TOTAL.inc()
 
 # ---------------------------------
 
+
 def get_api_url() -> str:
     """Obtiene la URL de la API desde las variables de entorno del contenedor.
 
@@ -95,7 +96,7 @@ def fetch_data(endpoint: str) -> list[dict[str, Any]]:
 
         duration = time.time() - start_time
         API_REQUEST_LATENCY.labels(endpoint=endpoint).observe(duration)
-        
+
         return response.json()
 
     except requests.exceptions.RequestException:
@@ -188,7 +189,9 @@ def render_devices() -> None:
             st.info("No hay dispositivos registrados actualmente en la base de datos.")
 
     except requests.exceptions.RequestException as e:
-        st.error("Error de comunicación con la base de datos: Verifica que el backend esté ejecutándose.")
+        st.error(
+            "Error de comunicación con la base de datos: Verifica que el backend esté ejecutándose."
+        )
         st.code(str(e))
 
 
@@ -212,18 +215,18 @@ def render_locations() -> None:
 
         if locations_data:
             df = pd.DataFrame(locations_data)
-            
+
             # Mapeo específico para las columnas de las ubicaciones
             COLUMN_MAPPING = {
                 "id": "ID",
                 "name": "Nombre de la Ubicación",
                 "site_code": "Codigo de Sitio",
             }
-            
+
             existing_columns = [col for col in COLUMN_MAPPING if col in df.columns]
             if existing_columns:
                 df = df[existing_columns].rename(columns=COLUMN_MAPPING)
-                
+
             st.dataframe(df, use_container_width=True, hide_index=True)
         else:
             st.info("No hay ubicaciones registradas actualmente en la base de datos.")
@@ -231,6 +234,7 @@ def render_locations() -> None:
     except requests.exceptions.RequestException as e:
         st.error("Error al cargar el directorio de ubicaciones.")
         st.code(str(e))
+
 
 def render_manufacturers() -> None:
     """Renderiza la vista de Gestión de Fabricantes.
@@ -246,24 +250,23 @@ def render_manufacturers() -> None:
     st.title("Gestión de Fabricantes")
     st.markdown("Directorio de fabricantes y proveedores.")
 
-
     try:
         with st.spinner("Cargando fabricantes..."):
             manufacturers_data = fetch_data("manufacturers")
 
         if manufacturers_data:
             df = pd.DataFrame(manufacturers_data)
-            
+
             # Mapeo específico para las columnas de los fabricantes
             COLUMN_MAPPING = {
                 "id": "ID",
                 "name": "Fabricante",
             }
-            
+
             existing_columns = [col for col in COLUMN_MAPPING if col in df.columns]
             if existing_columns:
                 df = df[existing_columns].rename(columns=COLUMN_MAPPING)
-                
+
             st.dataframe(df, use_container_width=True, hide_index=True)
         else:
             st.info("No hay fabricantes registrados actualmente en la base de datos.")
@@ -273,11 +276,10 @@ def render_manufacturers() -> None:
         st.code(str(e))
 
 
-
 def main() -> None:
     """Función principal que renderiza la interfaz web del MVP en Streamlit.
 
-    Construye la barra lateral de navegación con estado de sesión para el 
+    Construye la barra lateral de navegación con estado de sesión para el
     enrutamiento de las diferentes pantallas.
 
     Args:
@@ -290,7 +292,7 @@ def main() -> None:
         st.session_state.current_view = "Dispositivos"
 
     st.sidebar.title("Navegación")
-    
+
     if st.sidebar.button("🏢 Ubicaciones", use_container_width=True):
         st.session_state.current_view = "Ubicaciones"
     if st.sidebar.button("🔌 Dispositivos", use_container_width=True):
