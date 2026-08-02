@@ -2,7 +2,7 @@ name: Python Code Quality
 
 on:
   push:
-    branches: [ "main", "develop" ]
+    branches: [ "**" ] # Se ejecuta en cualquier rama
   pull_request:
     branches: [ "main" ]
 
