@@ -90,10 +90,9 @@ def fetch_data(endpoint: str) -> List[Dict[str, Any]]:
         duration = time.time() - start_time
         API_REQUEST_LATENCY.labels(endpoint=endpoint).observe(duration)
         
-        return response.json()
-    except requests.exceptions.RequestException as e:
+    except requests.exceptions.RequestException:
         API_ERRORS_TOTAL.labels(endpoint=endpoint).inc()
-        raise e
+        raise
 
 def get_mapped_dataframe(devices: List[Dict[str, Any]], locations: List[Dict[str, Any]], manufacturers: List[Dict[str, Any]]) -> pd.DataFrame:
     """Procesa los datos en crudo para cruzar IDs y renombrar las columnas para la interfaz web.
