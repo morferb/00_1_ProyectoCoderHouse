@@ -1,0 +1,13 @@
+observability-stack/
+├── Dockerfile
+├── docker-compose.yml
+└── config/
+    ├── supervisord.conf
+    ├── prometheus/
+    │   └── prometheus.yml
+    ├── blackbox/
+    │   └── blackbox.yml
+    └── grafana/
+        └── provisioning/
+            └── datasources/
+                └── datasource.yml

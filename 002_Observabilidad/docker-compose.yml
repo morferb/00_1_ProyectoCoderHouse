@@ -1,0 +1,45 @@
+services:
+  observability-stack:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: observability_all_in_one
+    image: observability_all_in_one
+    hostname: localhost
+    cap_add:
+      - NET_RAW   # <--- OBLIGATORIO para permitir pings ICMP desde el contenedor
+    ports:
+      - "3000:3000"   # Grafana UI
+      - "9090:9090"   # Prometheus UI
+      - "9115:9115"   # Blackbox Exporter API
+    volumes:
+      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./config/blackbox/blackbox.yml:/etc/blackbox/blackbox.yml:ro
+      - ./config/supervisord.conf:/etc/supervisor/supervisord.conf:ro
+      - ./config/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana_data:/var/lib/grafana
+      - prometheus_data:/var/lib/prometheus
+    restart: unless-stopped
+    networks:
+      - LAB_TYMA
+#-----
+  postgres-exporter:
+      image: quay.io/prometheuscommunity/postgres-exporter:latest
+      container_name: observability_postgres_exporter
+      restart: unless-stopped
+      environment:
+        DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=disable"
+      ports:
+        - "9187:9187"
+      networks:
+        - LAB_TYMA
+  #-----
+
+volumes:
+  grafana_data:
+    name: Obs_grafana_data
+  prometheus_data:
+    name: Obs_prometheus_data
+networks:
+  LAB_TYMA:
+    external: true
