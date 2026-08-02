@@ -21,3 +21,6 @@ postgres_data/
 
 #Variables de entorno
 .env
+
+# Draw.io
+*drawio.bkp
