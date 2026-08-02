@@ -7,12 +7,18 @@ on:
     branches: [ "main" ]
 
 jobs:
-  lint:
+  lint-and-format:
     runs-on: ubuntu-latest
+    
+    # Permisos necesarios para el auto-commit de las correcciones
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout del código
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
 
       - name: Configurar Python 3.11
         uses: actions/setup-python@v5
@@ -24,6 +30,23 @@ jobs:
           python -m pip install --upgrade pip
           pip install ruff
 
-      - name: Analizar código con Ruff
-        run: |
-          ruff check 001-Inventario-MVP/
+      # --- FASE DE ANÁLISIS ---
+      - name: 🔍 Análisis de Código (Reporte)
+        run: ruff check 001-Inventario-MVP/ --output-format=github
+        # Permite que el pipeline continúe hacia la corrección aunque haya fallos en el análisis
+        continue-on-error: true 
+
+      # --- FASE DE CORRECCIÓN ---
+      - name: 🛠️ Corrección Automática (Reglas y Sintaxis)
+        run: ruff check 001-Inventario-MVP/ --fix
+
+      - name: 🧹 Corrección Automática (Formateo de Estilo)
+        run: ruff format 001-Inventario-MVP/
+
+      # --- FASE DE GUARDADO ---
+      - name: 💾 Commit y Push de Correcciones
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "style: segregación de análisis y auto-fix [skip ci]"
+          commit_user_name: "github-actions[bot]"
+          commit_user_email: "github-actions[bot]@users.noreply.github.com"
