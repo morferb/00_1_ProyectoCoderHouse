@@ -31,8 +31,8 @@ ENV PATH="/opt/venv/bin:$PATH"
 # Copiar el código de la aplicación
 COPY . /app
 
-# Exponer el puerto por defecto de Streamlit
-EXPOSE 8501
+## Puerto 8501: Interfaz de Streamlit / Puerto 9101: Métricas Prometheus
+EXPOSE 8501 9101
 
 # Comando para ejecutar la aplicación web
 CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]

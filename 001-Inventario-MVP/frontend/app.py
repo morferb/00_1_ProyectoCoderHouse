@@ -3,6 +3,61 @@ import streamlit as st # pyright: ignore[reportMissingImports]
 import requests # pyright: ignore[reportMissingModuleSource, reportMissingImports]
 import pandas as pd # pyright: ignore[reportMissingModuleSource, reportMissingImports]
 from typing import List, Dict, Any
+#Prometheus
+import time
+from prometheus_client import start_http_server, Counter, Histogram
+
+# ==========================================
+# 1. CONFIGURACIÓN DE PÁGINA (ESTRICTAMENTE PRIMERO)
+# ==========================================
+st.set_page_config(page_title="Inventario TI", page_icon="🖥️", layout="wide")
+
+# ==========================================
+# MÉTRICAS DE PROMETHEUS
+# ==========================================
+
+@st.cache_resource
+def init_prometheus(port: int = 9101, addr: str = "0.0.0.0") -> tuple:
+    """Inicializa el servidor HTTP y define las métricas de Prometheus.
+
+    Utiliza el decorador @st.cache_resource para garantizar que el servidor y 
+    la declaración de métricas se ejecuten una sola vez en la memoria del sistema,
+    evitando colisiones de registro en las re-ejecuciones de Streamlit.
+
+    Args:
+        port (int, optional): Puerto TCP para exponer las métricas. Por defecto 9101.
+        addr (str, optional): Dirección IP a vincular. Por defecto '0.0.0.0'.
+
+    Returns:
+        tuple: Tupla con las instancias en caché de (PAGE_VIEWS_TOTAL, API_REQUEST_LATENCY, API_ERRORS_TOTAL).
+    """
+    start_http_server(port=port, addr=addr)
+
+    page_views = Counter(
+        "streamlit_page_views_total", 
+        "Número total de ejecuciones o interacciones en la aplicación"
+    )
+    api_latency = Histogram(
+        "frontend_api_request_duration_seconds",
+        "Latencia de las peticiones HTTP enviadas hacia el backend",
+        ["endpoint"]
+    )
+    api_errors = Counter(
+        "frontend_api_errors_total",
+        "Cantidad total de errores al intentar consultar la API",
+        ["endpoint"]
+    )
+
+    return page_views, api_latency, api_errors
+
+
+# Recuperar las instancias únicas guardadas en la caché de Streamlit
+PAGE_VIEWS_TOTAL, API_REQUEST_LATENCY, API_ERRORS_TOTAL = init_prometheus()
+
+# Incrementar la métrica de visitas en cada ciclo de la interfaz
+PAGE_VIEWS_TOTAL.inc()
+
+#---------------------------------
 
 def get_api_url() -> str:
     """Obtiene la URL de la API desde las variables de entorno del contenedor.
@@ -27,9 +82,18 @@ def fetch_data(endpoint: str) -> List[Dict[str, Any]]:
         requests.exceptions.RequestException: Si ocurre un error de red, timeout o
             la API devuelve un código de error HTTP (ej. 404, 500).
     """
-    response = requests.get(f"{API_URL}/{endpoint}/")
-    response.raise_for_status()
-    return response.json()
+    start_time = time.time()
+    try:
+        response = requests.get(f"{API_URL}/{endpoint}/")
+        response.raise_for_status()
+        
+        duration = time.time() - start_time
+        API_REQUEST_LATENCY.labels(endpoint=endpoint).observe(duration)
+        
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        API_ERRORS_TOTAL.labels(endpoint=endpoint).inc()
+        raise e
 
 def get_mapped_dataframe(devices: List[Dict[str, Any]], locations: List[Dict[str, Any]], manufacturers: List[Dict[str, Any]]) -> pd.DataFrame:
     """Procesa los datos en crudo para cruzar IDs y renombrar las columnas para la interfaz web.
@@ -87,7 +151,6 @@ def main() -> None:
     Returns:
         None: La función se dedica a pintar componentes en la pantalla.
     """
-    st.set_page_config(page_title="Inventario TI", page_icon="🖥️", layout="wide")
 
     # --- Barra Lateral ---
     st.sidebar.title("Navegación")

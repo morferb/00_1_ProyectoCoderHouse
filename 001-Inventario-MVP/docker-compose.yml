@@ -53,6 +53,7 @@ services:
     restart: unless-stopped
     ports:
       - "8501:8501"
+      - "9101:9101"
     environment:
       - API_URL=http://api_host:8000
     depends_on:
