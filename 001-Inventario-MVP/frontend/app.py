@@ -1,11 +1,13 @@
 import os
-import streamlit as st # pyright: ignore[reportMissingImports]
-import requests # pyright: ignore[reportMissingModuleSource, reportMissingImports]
-import pandas as pd # pyright: ignore[reportMissingModuleSource, reportMissingImports]
-from typing import List, Dict, Any
-#Prometheus
+
+# Prometheus
 import time
-from prometheus_client import start_http_server, Counter, Histogram
+from typing import Any
+
+import pandas as pd  # pyright: ignore[reportMissingModuleSource, reportMissingImports]
+import requests  # pyright: ignore[reportMissingModuleSource, reportMissingImports]
+import streamlit as st  # pyright: ignore[reportMissingImports]
+from prometheus_client import Counter, Histogram, start_http_server
 
 # ==========================================
 # 1. CONFIGURACIÓN DE PÁGINA (ESTRICTAMENTE PRIMERO)
@@ -16,11 +18,12 @@ st.set_page_config(page_title="Inventario TI", page_icon="🖥️", layout="wide
 # MÉTRICAS DE PROMETHEUS
 # ==========================================
 
+
 @st.cache_resource
 def init_prometheus(port: int = 9101, addr: str = "0.0.0.0") -> tuple:
     """Inicializa el servidor HTTP y define las métricas de Prometheus.
 
-    Utiliza el decorador @st.cache_resource para garantizar que el servidor y 
+    Utiliza el decorador @st.cache_resource para garantizar que el servidor y
     la declaración de métricas se ejecuten una sola vez en la memoria del sistema,
     evitando colisiones de registro en las re-ejecuciones de Streamlit.
 
@@ -34,18 +37,18 @@ def init_prometheus(port: int = 9101, addr: str = "0.0.0.0") -> tuple:
     start_http_server(port=port, addr=addr)
 
     page_views = Counter(
-        "streamlit_page_views_total", 
-        "Número total de ejecuciones o interacciones en la aplicación"
+        "streamlit_page_views_total",
+        "Número total de ejecuciones o interacciones en la aplicación",
     )
     api_latency = Histogram(
         "frontend_api_request_duration_seconds",
         "Latencia de las peticiones HTTP enviadas hacia el backend",
-        ["endpoint"]
+        ["endpoint"],
     )
     api_errors = Counter(
         "frontend_api_errors_total",
         "Cantidad total de errores al intentar consultar la API",
-        ["endpoint"]
+        ["endpoint"],
     )
 
     return page_views, api_latency, api_errors
@@ -57,7 +60,8 @@ PAGE_VIEWS_TOTAL, API_REQUEST_LATENCY, API_ERRORS_TOTAL = init_prometheus()
 # Incrementar la métrica de visitas en cada ciclo de la interfaz
 PAGE_VIEWS_TOTAL.inc()
 
-#---------------------------------
+# ---------------------------------
+
 
 def get_api_url() -> str:
     """Obtiene la URL de la API desde las variables de entorno del contenedor.
@@ -67,9 +71,11 @@ def get_api_url() -> str:
     """
     return os.getenv("API_URL", "http://localhost:8000")
 
+
 API_URL = get_api_url()
 
-def fetch_data(endpoint: str) -> List[Dict[str, Any]]:
+
+def fetch_data(endpoint: str) -> list[dict[str, Any]]:
     """Consulta un endpoint específico de la API para obtener un listado de registros.
 
     Args:
@@ -86,15 +92,20 @@ def fetch_data(endpoint: str) -> List[Dict[str, Any]]:
     try:
         response = requests.get(f"{API_URL}/{endpoint}/")
         response.raise_for_status()
-        
+
         duration = time.time() - start_time
         API_REQUEST_LATENCY.labels(endpoint=endpoint).observe(duration)
-        
+
     except requests.exceptions.RequestException:
         API_ERRORS_TOTAL.labels(endpoint=endpoint).inc()
         raise
 
-def get_mapped_dataframe(devices: List[Dict[str, Any]], locations: List[Dict[str, Any]], manufacturers: List[Dict[str, Any]]) -> pd.DataFrame:
+
+def get_mapped_dataframe(
+    devices: list[dict[str, Any]],
+    locations: list[dict[str, Any]],
+    manufacturers: list[dict[str, Any]],
+) -> pd.DataFrame:
     """Procesa los datos en crudo para cruzar IDs y renombrar las columnas para la interfaz web.
 
     Args:
@@ -107,7 +118,7 @@ def get_mapped_dataframe(devices: List[Dict[str, Any]], locations: List[Dict[str
         listo para ser renderizado en Streamlit.
     """
 
-# 1. Crear diccionarios de mapeo para búsquedas rápidas (O(1))
+    # 1. Crear diccionarios de mapeo para búsquedas rápidas (O(1))
     loc_map = {loc["id"]: loc["name"] for loc in locations}
     mfg_map = {mfg["id"]: mfg["name"] for mfg in manufacturers}
 
@@ -115,7 +126,9 @@ def get_mapped_dataframe(devices: List[Dict[str, Any]], locations: List[Dict[str
     for device in devices:
         # Se usa .get() doble para evitar errores si la llave no existe o si el valor es None
         device["location_name"] = loc_map.get(device.get("location_id"), "Sin Asignar")
-        device["manufacturer_name"] = mfg_map.get(device.get("manufacturer_id"), "Sin Asignar")
+        device["manufacturer_name"] = mfg_map.get(
+            device.get("manufacturer_id"), "Sin Asignar"
+        )
 
     df = pd.DataFrame(devices)
 
@@ -128,18 +141,19 @@ def get_mapped_dataframe(devices: List[Dict[str, Any]], locations: List[Dict[str
         "manufacturer_name": "Fabricante",
         "model": "Modelo de Equipo",
         "serial_number": "Número de Serie",
-        "location_name": "Sitio / Ubicación"
+        "location_name": "Sitio / Ubicación",
     }
 
     if not df.empty:
         # Filtrar solo las columnas que nos interesan mostrar y ordenarlas según el diccionario
-        existing_columns = [col for col in COLUMN_MAPPING.keys() if col in df.columns]
+        existing_columns = [col for col in COLUMN_MAPPING if col in df.columns]
         df = df[existing_columns]
-        
+
         # Aplicar el renombramiento de columnas para la visualización
         df = df.rename(columns=COLUMN_MAPPING)
 
     return df
+
 
 def main() -> None:
     """Función principal que renderiza la interfaz web del MVP en Streamlit.
@@ -165,21 +179,23 @@ def main() -> None:
     try:
         # Ejecutar peticiones a los distintos endpoints
         with st.spinner("Cargando datos desde la API..."):
-            devices_data = fetch_data("devices") 
-            locations_data = fetch_data("locations") 
-            manufacturers_data = fetch_data("manufacturers") 
+            devices_data = fetch_data("devices")
+            locations_data = fetch_data("locations")
+            manufacturers_data = fetch_data("manufacturers")
 
         if devices_data:
             # Procesar el dataframe cruzado
             df = get_mapped_dataframe(devices_data, locations_data, manufacturers_data)
-            
+
             # Renderizar tabla interactiva
             st.dataframe(df, use_container_width=True, hide_index=True)
         else:
             st.info("No hay dispositivos registrados actualmente en la base de datos.")
 
     except requests.exceptions.RequestException as e:
-        st.error(f"Error de comunicación con la base de datos: Verifica que el backend esté ejecutándose.")
+        st.error(
+            "Error de comunicación con la base de datos: Verifica que el backend esté ejecutándose."
+        )
         st.code(str(e))
 
 
