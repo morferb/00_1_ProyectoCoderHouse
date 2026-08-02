@@ -232,6 +232,47 @@ def render_locations() -> None:
         st.error("Error al cargar el directorio de ubicaciones.")
         st.code(str(e))
 
+def render_manufacturers() -> None:
+    """Renderiza la vista de Gestión de Fabricantes.
+
+    Obtiene el listado de fabricantes desde el endpoint de fabricantes y los expone.
+
+    Args:
+        Ninguno.
+
+    Returns:
+        None: Renderiza componentes visuales en Streamlit.
+    """
+    st.title("Gestión de Fabricantes")
+    st.markdown("Directorio de fabricantes y proveedores.")
+
+
+    try:
+        with st.spinner("Cargando fabricantes..."):
+            manufacturers_data = fetch_data("manufacturers")
+
+        if manufacturers_data:
+            df = pd.DataFrame(manufacturers_data)
+            
+            # Mapeo específico para las columnas de los fabricantes
+            COLUMN_MAPPING = {
+                "id": "ID",
+                "name": "Fabricante",
+            }
+            
+            existing_columns = [col for col in COLUMN_MAPPING if col in df.columns]
+            if existing_columns:
+                df = df[existing_columns].rename(columns=COLUMN_MAPPING)
+                
+            st.dataframe(df, use_container_width=True, hide_index=True)
+        else:
+            st.info("No hay fabricantes registrados actualmente en la base de datos.")
+
+    except requests.exceptions.RequestException as e:
+        st.error("Error al cargar el directorio de fabricantes.")
+        st.code(str(e))
+
+
 
 def main() -> None:
     """Función principal que renderiza la interfaz web del MVP en Streamlit.
@@ -265,8 +306,7 @@ def main() -> None:
     elif st.session_state.current_view == "Ubicaciones":
         render_locations()
     elif st.session_state.current_view == "Fabricantes":
-        st.title("Gestión de Fabricantes")
-        st.info("Vista en construcción...")
+        render_manufacturers()
     elif st.session_state.current_view == "Tipos de Dispositivos":
         st.title("Tipos de Dispositivos")
         st.info("Vista en construcción...")
