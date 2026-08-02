@@ -6,38 +6,7 @@ Este proyecto consiste en un **MVP de Inventario de Infraestructura TI** diseña
 
 La solución está dividida en dos planos conceptuales operados mediante instancias independientes de `docker-compose`:
 
-Plaintext
-
-```
-====================================================================================
-                        RED DOCKER: MGMT - LAB TYMA (External)
-====================================================================================
-  │
-  ├─► [ STACK DE APLICACIÓN ]
-  │    │
-  │    ├─► FRONTEND (Streamlit)
-  │    │    ├── TCP 8501 : UI Web
-  │    │    └── TCP 9101 : Métricas Prometheus (/metrics)
-  │    │
-  │    ├─► BACKEND (FastAPI + SQLModel)
-  │    │    └── TCP 8000 : API REST & Métricas Prometheus
-  │    │
-  │    └─► DATABASE (PostgreSQL)
-  │         ├── TCP 5432 : Servicio Base de Datos
-  │         └── Volume   : inventario_postgres_data
-  │
-  └─► [ STACK DE OBSERVABILIDAD ]
-       │
-       ├─► OBSERVABILITY ALL-IN-ONE
-       │    ├── TCP 3000 : Grafana Dashboards
-       │    ├── TCP 9090 : Prometheus Server
-       │    ├── TCP 9115 : Blackbox Exporter (Sondas ICMP/HTTP)
-       │    └── Volumes  : Obs_grafana_data, Obs_prometheus_data
-       │
-       └─► POSTGRES EXPORTER
-            └── TCP 9187 : Métricas de rendimiento de la BD
-====================================================================================
-```
+![[Arquitectura_DevOps_v1.png]]
 
 ## 🛠️ Tech Stack
 
@@ -63,6 +32,16 @@ Plaintext
 |**Prometheus**|`9090`|TCP|Consola web y motor de métricas PromQL|
 |**Blackbox Exporter**|`9115`|TCP|Sondas de conectividad (Probe ICMP/HTTP)|
 |**Postgres Exporter**|`9187`|TCP|Extracción de métricas operativas de PostgreSQL|
+## 💾 Persistencia de Datos
+
+El proyecto implementa volúmenes nombrados administrados por Docker para garantizar la persistencia de información ante reinicios o recreación de contenedores:
+
+- **`inventario_postgres_data`:** Datos relacionales del inventario TI.
+    
+- **`Obs_prometheus_data`:** Base de datos de series temporales de métricas.
+    
+- **`Obs_grafana_data`:** Configuraciones, usuarios y dashboards de Grafana.
+---
 
 ## 📁 Estructura del Proyecto
 
@@ -169,22 +148,11 @@ Una vez inicializados ambos stacks, puedes validar los puntos finales de observa
 - **Prometheus Targets:** Acceder a `http://localhost:9090/targets` y verificar que todos los _jobs_ (`backend`, `frontend`, `postgres`) reporten estado **UP**.
     
 
-## 💾 Persistencia de Datos
 
-El proyecto implementa volúmenes nombrados administrados por Docker para garantizar la persistencia de información ante reinicios o recreación de contenedores:
-
-- **`inventario_postgres_data`:** Datos relacionales del inventario TI.
-    
-- **`Obs_prometheus_data`:** Base de datos de series temporales de métricas.
-    
-- **`Obs_grafana_data`:** Configuraciones, usuarios y dashboards de Grafana.
----
 ## 📌 Próximos Pasos y Roadmap
 
 ### 🔄 Fase 1: Integración y Despliegue Continuo (CI/CD)
-- [ ] Crear pipeline en GitHub Actions / GitLab CI para linters y ejecuciones de test automáticas.
-- [ ] Automatizar la construcción (*build*) y etiquetado (*tagging*) de imágenes Docker en cada `git push`.
-- [ ] Configurar la publicación automática de imágenes en un Container Registry (GHCR / Docker Hub).
+- [x] Crear pipeline en GitHub Actions / GitLab CI para linters y ejecuciones de test automáticas.
 - [ ] Implementar despliegue automático (*CD*) sobre la red de gestión `LAB_TYMA` ante fusiones a la rama principal.
 
 ### 🏗️ Fase 2: Infraestructura como Código (Terraform)
@@ -208,3 +176,33 @@ El proyecto implementa volúmenes nombrados administrados por Docker para garant
 - [ ] Configurar linters y formateadores automáticos (`ruff`, `black`) reforzando el estándar de Docstrings.
 - [ ] Agregar autenticación y autorización mediante JWT en los endpoints de FastAPI.
 - [ ] Implementar gestión de secretos mediante variables de entorno en lugar de credenciales estáticas.
+
+---
+### Uso de GIT: Integrar nueva rama a main
+-  **Paso A**: Sincronizar tu rama con los posibles cambios de `main`
+	_(Súper importante para probar y resolver conflictos en tu rama antes de tocar `main`)_.
+
+ ``` bash
+# 1. Traer lo último de main a tu rama
+git merge main
+ ```
+ Si hay conflictos: Edita los archivos marcados, guarda los cambios y haz:
+ ```bash
+ git add .
+ git commit -m "fix: resuelvo conflictos con main"
+ ```
+
+- **Paso B:** Integrar en main
+``` bash
+ # 1. Cambiar a la rama principal
+git checkout main
+
+# 2. Asegurar que main local esté al día
+git pull origin main
+
+# 3. Unificar tu rama dentro de main
+git merge mi-nueva-rama
+
+# 4. Subir la unificación a GitHub
+git push origin main
+ ```
