@@ -20,13 +20,20 @@ jobs:
       - name: Validar Build del Backend
         uses: docker/build-push-action@v5
         with:
-          context: ./app-stack/backend
-          file: ./app-stack/backend/Dockerfile
+          context: ./001-Inventario-MVP/backend
+          file: ./001-Inventario-MVP/backend/Dockerfile
           push: false
 
       - name: Validar Build del Frontend
         uses: docker/build-push-action@v5
         with:
-          context: ./app-stack/frontend
-          file: ./app-stack/frontend/Dockerfile
+          context: ./001-Inventario-MVP/frontend
+          file: ./001-Inventario-MVP/frontend/Dockerfile
+          push: false
+      
+      - name: Validar Build de Observabilidad
+        uses: docker/build-push-action@v5
+        with:
+          context: ./002_Observabilidad   
+          file: ./002_Observabilidad/Dockerfile
           push: false

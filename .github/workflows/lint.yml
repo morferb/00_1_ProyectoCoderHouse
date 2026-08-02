@@ -26,4 +26,4 @@ jobs:
 
       - name: Analizar código con Ruff
         run: |
-          ruff check app-stack/
+          ruff check 001-Inventario-MVP/
