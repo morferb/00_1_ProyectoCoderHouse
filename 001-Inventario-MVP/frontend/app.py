@@ -7,7 +7,11 @@ from typing import Any
 import pandas as pd  # pyright: ignore[reportMissingModuleSource, reportMissingImports]
 import requests  # pyright: ignore[reportMissingModuleSource, reportMissingImports]
 import streamlit as st  # pyright: ignore[reportMissingImports]
-from prometheus_client import Counter, Histogram, start_http_server # pyright: ignore[reportMissingModuleSource, reportMissingImports]
+from prometheus_client import (  # pyright: ignore[reportMissingModuleSource, reportMissingImports]
+    Counter,
+    Histogram,
+    start_http_server,
+)
 
 # ==========================================
 # 1. CONFIGURACIÓN DE PÁGINA (ESTRICTAMENTE PRIMERO)
