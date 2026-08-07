@@ -26,3 +26,7 @@ prometheus_data/
 
 # Draw.io
 *drawio.bkp
+
+# Secretos de Kubernetes
+*secrets.yml
+
