@@ -46,6 +46,7 @@ El proyecto implementa volúmenes nombrados administrados por Docker para garant
 ## 📁 Estructura del Proyecto
 
 ```Plaintext
+.
 ├── 001-Inventario-MVP
 │   ├── backend
 │   │   ├── Dockerfile
@@ -81,14 +82,40 @@ El proyecto implementa volúmenes nombrados administrados por Docker para garant
 │   ├── docker-compose.yml
 │   ├── Dockerfile
 │   ├── README.md
-│   └── tree.txt
 ├── 003_Arquitectura
 │   ├── Arquitectura_DevOps.drawio
 │   └── Arquitectura_DevOps_v1.png
+├── 004_k8s
+│   ├── 00-secrets.yml
+│   ├── 00-secrets.yml.example
+│   ├── 01-database.yml
+│   ├── 02-backend.yml
+│   ├── 03-frontend.yml
+│   ├── 04-ingress.yml
+│   ├── 05-observability.yml
+│   └── README-k8s.md
+├── 005_Terraform
+│   ├── 00_Instructivo de Laboratorio Terraform con MiniStack.md
+│   ├── main.tf
+│   ├── modules
+│   │   └── vpc
+│   │       └── vpc.tf
+│   ├── providers.tf
+├── 010_Evidencias
+│   ├── k8s
+│   │   ├── 001-Evidencia-k8s.png
+│   │   ├── 002-API-k8s.png
+│   │   ├── 003-docker-images-k8s.png
+│   │   └── 003-Front-k8s.png
+│   └── Observabilidad
+│       ├── 01_Obs-Prometheus.png
+│       └── 02_Obs-Grafana.png
 └── README.md
-```
 
-## 🚀 Despliegue e Instalación
+```
+---
+
+## 🚀 Despliegue e Instalación en Docker Compose
 
 ### 1. Prerrequisitos
 
@@ -98,7 +125,7 @@ El proyecto implementa volúmenes nombrados administrados por Docker para garant
 ```bash
 docker network create \
 --driver bridge \
---subnet 172.200.0/24 \
+--subnet 172.200.0.0/24 \
 --gateway 172.200.0.1 \
 LAB_TYMA
 ```
@@ -156,12 +183,12 @@ Una vez inicializados ambos stacks, puedes validar los puntos finales de observa
 - [ ] Implementar despliegue automático (*CD*) sobre la red de gestión `LAB_TYMA` ante fusiones a la rama principal.
 
 ### 🏗️ Fase 2: Infraestructura como Código (Terraform)
-- [ ] Crear scripts de Terraform para aprovisionar las instancias y redes virtuales en el entorno destino.
+- [x] Crear scripts de Terraform para aprovisionar las instancias y redes virtuales en el entorno destino.
 - [ ] Modularizar la infraestructura para soportar fácilmente entornos de *Staging* y *Producción*.
 - [ ] Integrar la gestión de estado de Terraform (*backend remoto*).
 
 ### ☸️ Fase 3: Orquestación y Alta Disponibilidad (Kubernetes)
-- [ ] Traducir los servicios de `docker-compose` a manifiestos de Kubernetes (`Deployments`, `Services`, `PVCs`).
+- [x] Traducir los servicios de `docker-compose` a manifiestos de Kubernetes (`Deployments`, `Services`, `PVCs`).
 - [ ] Empaquetar la aplicación en un **Helm Chart** modular.
 - [ ] Configurar un **Ingress Controller** (Nginx / Traefik) para exponer las interfaces de Streamlit, Grafana y la API.
 - [ ] Implementar la estrategia GitOps utilizando **ArgoCD** para la sincronización del cluster.
