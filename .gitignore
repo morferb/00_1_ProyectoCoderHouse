@@ -30,3 +30,24 @@ prometheus_data/
 # Secretos de Kubernetes
 *secrets.yml
 
+# Directorio local de plugins y módulos de Terraform
+.terraform/
+
+# Archivos de estado (contienen información sensible de tu infraestructura)
+*.tfstate
+*.tfstate.*
+
+# Archivos de plan de ejecución
+*.tfplan
+
+# Registros de fallos/crashes
+crash.log
+crash.*.log
+
+# Excluir archivos de variables locales, permitiendo mantener las plantillas de ejemplo
+*.tfvars
+!*.tfvars.example
+
+# Credenciales locales o tokens temporales
+.terraformrc
+terraform.rc
