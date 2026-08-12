@@ -6,7 +6,7 @@ Este proyecto consiste en un **MVP de Inventario de Infraestructura TI** diseña
 
 La solución está dividida en dos planos conceptuales operados mediante instancias independientes de `docker-compose`:
 
-![[003_Arquitectura/Arquitectura_DevOps_v1.png]]
+![Imagen](003_Arquitectura/Arquitectura_DevOps_v1.png)
 
 ## 🛠️ Tech Stack
 
