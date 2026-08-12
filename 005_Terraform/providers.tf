@@ -6,32 +6,43 @@ terraform {
     }
   }
 }
+# 005_Terraform/providers.tf
 
+# Provider para la Cuenta 1 (Networking / TGW / DX) - LocalStack
 provider "aws" {
+  alias                       = "networking"
   region                      = "us-east-1"
-  access_key                  = "test"
-  secret_key                  = "test"
-  s3_use_path_style           = true
+  access_key                  = "mock_access_key_networking"
+  secret_key                  = "mock_secret_key"
+  
+  # Omitir validaciones de AWS real
+  skip_credentials_validation = true
+  skip_metadata_api_check     = true
+  skip_requesting_account_id  = true
+
+  # Redirigir el tráfico al contenedor de LocalStack
+  endpoints {
+    ec2           = "http://localhost:4566"
+    ram           = "http://localhost:4566"
+    directconnect = "http://localhost:4566"
+    sts           = "http://localhost:4566"
+  }
+}
+
+# Provider para la Cuenta 2 (Servicios / App) - LocalStack
+provider "aws" {
+  alias                       = "app"
+  region                      = "us-east-1"
+  access_key                  = "mock_access_key_app"
+  secret_key                  = "mock_secret_key"
+  
   skip_credentials_validation = true
   skip_metadata_api_check     = true
   skip_requesting_account_id  = true
 
   endpoints {
-    s3             = "http://localhost:4566"
-    dynamodb       = "http://localhost:4566"
-    sqs            = "http://localhost:4566"
-    sns            = "http://localhost:4566"
-    lambda         = "http://localhost:4566"
-    iam            = "http://localhost:4566"
-    ec2            = "http://localhost:4566"
-    ecs            = "http://localhost:4566"
-    cloudformation = "http://localhost:4566"
-    route53        = "http://localhost:4566"
-    cloudwatch     = "http://localhost:4566"
-    secretsmanager = "http://localhost:4566"
-    ssm            = "http://localhost:4566"
-    kms            = "http://localhost:4566"
-    rds            = "http://localhost:4566"
-    sts            = "http://localhost:4566"
+    ec2           = "http://localhost:4566"
+    ram           = "http://localhost:4566"
+    sts           = "http://localhost:4566"
   }
 }

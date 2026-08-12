@@ -25,6 +25,14 @@ resource "aws_subnet" "private" {
   }
 }
 
+resource "aws_subnet" "mgmt" {
+  vpc_id            = aws_vpc.Laboratorio.id
+  cidr_block        = "10.100.250.0/24"
+  tags = {
+    Name = "Laboratorio-Mgmt-Subnet"
+  }
+}
+
 # 4. Internet Gateway para permitir el tráfico de internet en la subred pública
 resource "aws_internet_gateway" "gw" {
   vpc_id = aws_vpc.Laboratorio.id
