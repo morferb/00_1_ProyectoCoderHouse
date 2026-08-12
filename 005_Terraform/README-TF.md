@@ -129,7 +129,7 @@ provider "aws" {
 
 ### 3. Diseño de los Módulos (Artefactos a declarar)
 
-#### Módulo VPC (`modules/vpc/vpc.tf`) - _Se ejecuta en Cuenta 2_
+#### Módulo VPC (`modules/vpc/vpc.tf`) - 
 
 Este módulo es responsable de la red local donde vive la EC2 y de dirigir el tráfico saliente hacia el On-Premise.
 
